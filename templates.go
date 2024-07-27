@@ -11,10 +11,11 @@ import (
 )
 
 var funcMap = template.FuncMap{
-	"inStrings":    inStrings,
-	"withPath":     withPath,
-	"withQuery":    withQuery,
-	"withoutQuery": withoutQuery,
+	"inStrings":         inStrings,
+	"withPath":          withPath,
+	"withQuery":         withQuery,
+	"withoutQuery":      withoutQuery,
+	"formatDiceResults": formatDiceResults,
 }
 
 type TemplateRenderer struct {
@@ -131,4 +132,15 @@ func withoutQuery(key string, input *url.URL) *url.URL {
 	newURL.RawQuery = currentQuery.Encode()
 
 	return newURL
+}
+
+func formatDiceResults(results DiceResults) template.HTML {
+	htmlParts := make([]string, len(results))
+
+	for i, result := range results {
+		htmlResult := fmt.Sprintf(`<span class="dice__result">%d</span>`, result)
+		htmlParts[i] = htmlResult
+	}
+
+	return template.HTML(strings.Join(htmlParts, " ")) //nolint:gosec
 }

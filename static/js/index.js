@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", function() {
         switch (event.detail.type) {
         case "ROLL":
             var history_div = document.getElementById("history")
-            history_div.innerHTML = data.html;
+            history_div.outerHTML = data.html;
             break;
         case "STATS":
             var stats_div = document.getElementById("stats")
