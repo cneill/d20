@@ -1,10 +1,7 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -113,7 +110,7 @@ func (s *Server) RollHandler(writer http.ResponseWriter, req *http.Request) {
 	s.Rolls = append(s.Rolls, roll)
 	s.rollMutex.Unlock()
 
-	s.NotifyClients()
+	s.NotifyClients(EventTypeRoll)
 
 	data := struct {
 		User    *User
@@ -128,45 +125,6 @@ func (s *Server) RollHandler(writer http.ResponseWriter, req *http.Request) {
 	if err := s.Renderer.ExecuteSingle(writer, "history", data); err != nil {
 		s.doErr(writer, fmt.Sprintf("failed to execute history template: %v", err))
 		return
-	}
-}
-
-func (s *Server) NotifyClients() {
-	data := struct {
-		History Rolls
-		OOB     bool
-	}{
-		History: s.Rolls.Sort(),
-		OOB:     false,
-	}
-
-	// Render the new row HTML
-	var buf bytes.Buffer
-	if err := s.Renderer.ExecuteSingle(&buf, "history", data); err != nil {
-		log.Printf("Error rendering history row: %v", err)
-		return
-	}
-
-	message := struct {
-		HTML string `json:"html"`
-	}{
-		HTML: buf.String(),
-	}
-
-	messageBytes, err := json.Marshal(message)
-	if err != nil {
-		panic(fmt.Errorf("failed to encode JSON: %w", err))
-	}
-
-	s.clientMutex.RLock()
-	defer s.clientMutex.RUnlock()
-
-	for clientChan := range s.clients {
-		select {
-		case clientChan <- string(messageBytes):
-		default:
-			// Client is not ready to receive the message, skip it
-		}
 	}
 }
 
@@ -185,37 +143,63 @@ func (s *Server) HistoryHandler(writer http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (s *Server) SSEHandler(writer http.ResponseWriter, req *http.Request) {
-	// Set headers for SSE
-	writer.Header().Set("Content-Type", "text/event-stream")
-	writer.Header().Set("Cache-Control", "no-cache")
-	writer.Header().Set("Connection", "keep-alive")
+func (s *Server) StatsHandler(writer http.ResponseWriter, req *http.Request) {
+	if err := s.Renderer.ExecuteSingle(writer, "stats", s.Stats); err != nil {
+		s.doErr(writer, fmt.Sprintf("failed to execute history template: %v", err))
+		return
+	}
+}
 
-	// Create a channel for this client
-	messageChan := make(chan string)
+func (s *Server) GameMasterHandler(writer http.ResponseWriter, req *http.Request) {
+	if err := req.ParseForm(); err != nil {
+		s.doErr(writer, fmt.Sprintf("failed to parse form: %v", err))
+		return
+	}
 
-	// Register the client
-	s.clientMutex.Lock()
-	s.clients[messageChan] = true
-	s.clientMutex.Unlock()
+	threat, err := strconv.ParseInt(req.Form.Get("threat"), 10, 64)
+	if err != nil {
+		s.doErr(writer, fmt.Sprintf("invalid number of threat: %v", err))
+		return
+	}
 
-	// Remove the client when the connection is closed
-	defer func() {
-		s.clientMutex.Lock()
-		delete(s.clients, messageChan)
-		s.clientMutex.Unlock()
-	}()
+	momentum, err := strconv.ParseInt(req.Form.Get("momentum"), 10, 64)
+	if err != nil {
+		s.doErr(writer, fmt.Sprintf("invalid number of momentum: %v", err))
+		return
+	}
 
-	for {
-		select {
-		case message := <-messageChan:
-			msg := fmt.Sprintf("event: message\ndata: %s\n\n", message)
-			fmt.Printf("MESSAGE: %s\n", msg)
-			fmt.Fprint(writer, msg)
-			writer.(http.Flusher).Flush()
-		case <-req.Context().Done():
-			return
-		}
+	s.Stats.Threat = int(threat)
+	s.Stats.Momentum = int(momentum)
+
+	s.NotifyClients(EventTypeStats)
+}
+
+func (s *Server) PrivateRollHandler(writer http.ResponseWriter, req *http.Request) {
+	user := UserFromContext(req)
+
+	if err := req.ParseForm(); err != nil {
+		s.doErr(writer, fmt.Sprintf("failed to parse form: %v", err))
+		return
+	}
+
+	sides, err := strconv.ParseInt(req.Form.Get("sides"), 10, 64)
+	if err != nil {
+		s.doErr(writer, fmt.Sprintf("invalid number of sides: %v", err))
+		return
+	}
+
+	num, err := strconv.ParseInt(req.Form.Get("num"), 10, 64)
+	if err != nil {
+		s.doErr(writer, fmt.Sprintf("invalid number of dice: %v", err))
+		return
+	}
+
+	dice := NewDice(int(sides), int(num))
+	roll := dice.Roll(user)
+
+	if err := s.Renderer.ExecuteSingle(writer, "private_roll", roll); err != nil {
+		s.doErr(writer, fmt.Sprintf("failed to execute history template: %v", err))
+		return
 	}
 }
 

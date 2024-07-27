@@ -1,4 +1,13 @@
+{{ define "stats" }}
+<h1>Stats</h1>
+<div class="stats" id="stats">
+    <b>Momentum</b>: {{ .Momentum }}
+    <b>Threat</b>: {{ .Threat }}
+</div>
+{{- end -}}
+
 {{ define "history" }}
+<h1>Rolls</h1>
 {{- if .OOB }}
 <div class="history" id="history" hx-oob="true">
 {{- else }}
@@ -27,11 +36,8 @@
 </div>
 {{- end -}}
 
-{{ define "history-row" }}
-<tr class="table__row">
-    <td class="table__cell"><b>{{ .User.Name }}</b> ({{ .User.CharacterName }})</td>
-    <td class="table__cell">{{ .Time.Format "Jan 02, 15:04:05" }}</td>
-    <td class="table__cell">{{ .Result.String }}</td>
-    <td class="table__cell">{{ .User.IPAddress }}</td>
-</tr>
-{{- end -}}
+{{ define "private_roll" }}
+<div class="private-roll" id="private-roll">
+    <b>Private roll result:</b> {{ .Result.String }}
+</div>
+{{- end }}

@@ -53,3 +53,16 @@ func (s *Server) UserMiddleware(required bool, next http.HandlerFunc) http.Handl
 		next(writer, req)
 	}
 }
+
+func (s *Server) GameMasterMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(writer http.ResponseWriter, req *http.Request) {
+		user := UserFromContext(req)
+
+		if !user.IsGameMaster {
+			s.doErr(writer, "YOU ARE NOT THE GAME MASTER")
+			return
+		}
+
+		next(writer, req)
+	}
+}

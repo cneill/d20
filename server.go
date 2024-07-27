@@ -42,11 +42,12 @@ type Server struct {
 	Server   *http.Server
 	Renderer *TemplateRenderer
 	Rolls    Rolls
+	Stats    *Stats
 
 	secretKey   []byte
 	rollMutex   sync.Mutex
 	clientMutex sync.RWMutex
-	clients     map[chan string]bool
+	clients     map[chan EventMessage]bool
 }
 
 func NewServer(opts *ServerOpts) (*Server, error) {
@@ -95,11 +96,15 @@ func NewServer(opts *ServerOpts) (*Server, error) {
 			},
 		},
 		Renderer: renderer,
+		Stats: &Stats{
+			Momentum: 0,
+			Threat:   0,
+		},
 
 		secretKey:   secretKey,
 		rollMutex:   sync.Mutex{},
 		clientMutex: sync.RWMutex{},
-		clients:     make(map[chan string]bool),
+		clients:     make(map[chan EventMessage]bool),
 	}
 
 	if err := server.setupRoutes(); err != nil {
@@ -119,7 +124,10 @@ func (s *Server) setupRoutes() error {
 	s.Mux.HandleFunc("GET /dice", s.UserMiddleware(true, s.DiceHandler))
 	s.Mux.HandleFunc("GET /sse", s.UserMiddleware(true, s.SSEHandler))
 	s.Mux.HandleFunc("GET /history", s.UserMiddleware(true, s.HistoryHandler))
+	s.Mux.HandleFunc("GET /stats", s.UserMiddleware(true, s.StatsHandler))
 	s.Mux.HandleFunc("POST /roll", s.UserMiddleware(true, s.RollHandler))
+	s.Mux.HandleFunc("POST /private-roll", s.UserMiddleware(true, s.GameMasterMiddleware(s.PrivateRollHandler)))
+	s.Mux.HandleFunc("POST /game-master", s.UserMiddleware(true, s.GameMasterMiddleware(s.GameMasterHandler)))
 	s.Mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
 
 	return nil

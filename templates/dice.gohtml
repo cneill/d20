@@ -4,8 +4,9 @@
 
 {{- define "content" -}}
 {{- $user := .User }}
-Hi, {{ $user.Name }}!
+<h1>Hi, {{ $user.Name }}!</h1>
 
+{{- if not $user.IsGameMaster }}
 <form class="form" hx-post="/roll" hx-target="#history">
     <fieldset clas="form__fieldset">
         <label class="form__label" for="num">Number of dice:</label>
@@ -17,15 +18,57 @@ Hi, {{ $user.Name }}!
         <input class="form__button" type="submit" value="Let's roll" />
     </fieldset>
 </form>
+{{- else }}
+<div class="gamemaster" id="gamemaster">
+    <h1>Game Master Settings</h1>
+    <form class="form" hx-post="/game-master" hx-target="#stats">
+        <h2>Update stats</h2>
+        <fieldset class="form__fieldset">
+            <label class="form__label" for="threat">Threat</label>
+            <input class="form__input" name="threat" value=0 type="number" min="0" max="100" />
+            <br />
+            <label class="form__label" for="momentum">Momentum</label>
+            <input class="form__input" name="momentum" value=0 type="number" min="0" max="100" />
+            <br />
+            <input class="form__button" type="submit" value="Update" />
+        </fieldset>
+    </form>
+
+    <form class="form" hx-post="/private-roll" hx-target="#private-roll">
+        <h2>Private roll</h2>
+        <fieldset clas="form__fieldset">
+            <label class="form__label" for="num">Number of dice:</label>
+            <input class="form__input" name="num" value=2 type="number" min="1" max="10" />
+            <br />
+            <label class="form__label" for="sides">Number of sides:</label>
+            <input class="form__input" name="sides" value=20 type="number" min="2" max="100" />
+            <br />
+            <input class="form__button" type="submit" value="Private roll" />
+        </fieldset>
+    </form>
+
+    <div class="private-roll" id="private-roll"></div>
+</div>
+{{- end }}
+
+<div class="stats" id="stats" hx-get="/stats" hx-trigger="load" hx-swap="innerHTML"></div>
 
 <div class="history" id="history" hx-get="/history" hx-trigger="load" hx-swap="innerHTML"></div>
 
 <div 
     hx-ext="sse"
     sse-connect="/sse"
-    hx-target="#history"
-    hx-swap="innerHTML"
-    sse-swap="message"
-    sse-error-reconnect-after="2000"></div>
-<!-- <div class="history" id="history"></div> -->
+    sse-error-reconnect-after="2000">
+    <div 
+        hx-target="#history"
+        hx-swap="innerHTML"
+        sse-swap="ROLL"
+        sse-error-reconnect-after="2000"></div>
+    <div 
+        hx-target="#stats"
+        hx-swap="innerHTML"
+        sse-swap="STATS"
+        sse-error-reconnect-after="2000"></div>
+
+</div>
 {{- end }}
