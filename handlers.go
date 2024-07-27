@@ -36,11 +36,19 @@ func (s *Server) IndexHandler(writer http.ResponseWriter, req *http.Request) {
 			return
 		}
 
+		var ipAddr string
+
+		if forwarded := req.Header.Get("X-Forwarded-For"); forwarded != "" {
+			ipAddr = maskIP(forwarded)
+		} else {
+			ipAddr = maskIP(req.RemoteAddr)
+		}
+
 		user := &User{
 			Name:          name,
 			CharacterName: characterName,
 			IsGameMaster:  characterName == "GM",
-			IPAddress:     maskIP(req.RemoteAddr),
+			IPAddress:     ipAddr,
 		}
 
 		dataCookie, err := user.DataCookie(s.secretKey)
@@ -70,10 +78,12 @@ func (s *Server) DiceHandler(writer http.ResponseWriter, req *http.Request) {
 	data := struct {
 		User    *User
 		History Rolls
+		Stats   *Stats
 		OOB     bool
 	}{
 		User:    user,
 		History: s.Rolls.Sort(),
+		Stats:   s.Stats,
 		OOB:     true,
 	}
 
@@ -168,8 +178,10 @@ func (s *Server) GameMasterHandler(writer http.ResponseWriter, req *http.Request
 		return
 	}
 
+	s.statsMutex.Lock()
 	s.Stats.Threat = int(threat)
 	s.Stats.Momentum = int(momentum)
+	s.statsMutex.Unlock()
 
 	s.NotifyClients(EventTypeStats)
 }

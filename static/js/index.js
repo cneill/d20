@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function() {
     document.body.addEventListener("htmx:sseMessage", function(event) {
-        // console.debug(event);
+        console.debug(event);
         var data = JSON.parse(event.detail.data);
 
         switch (event.detail.type) {
@@ -10,7 +10,8 @@ document.addEventListener("DOMContentLoaded", function() {
             break;
         case "STATS":
             var stats_div = document.getElementById("stats")
-            stats_div.innerHTML = data.html;
+            stats_div.outerHTML = data.html;
+            break;
         }
     });
 });

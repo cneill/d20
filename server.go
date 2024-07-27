@@ -46,6 +46,7 @@ type Server struct {
 
 	secretKey   []byte
 	rollMutex   sync.Mutex
+	statsMutex  sync.Mutex
 	clientMutex sync.RWMutex
 	clients     map[chan EventMessage]bool
 }
@@ -103,6 +104,7 @@ func NewServer(opts *ServerOpts) (*Server, error) {
 
 		secretKey:   secretKey,
 		rollMutex:   sync.Mutex{},
+		statsMutex:  sync.Mutex{},
 		clientMutex: sync.RWMutex{},
 		clients:     make(map[chan EventMessage]bool),
 	}
