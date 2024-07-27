@@ -1,0 +1,31 @@
+{{ template "layout" . }}
+
+{{- define "title" -}}Let's roll{{- end }}
+
+{{- define "content" -}}
+{{- $user := .User }}
+Hi, {{ $user.Name }}!
+
+<form class="form" hx-post="/roll" hx-target="#history">
+    <fieldset clas="form__fieldset">
+        <label class="form__label" for="num">Number of dice:</label>
+        <input class="form__input" name="num" value=2 type="number" min="1" max="10" />
+        <br />
+        <label class="form__label" for="sides">Number of sides:</label>
+        <input class="form__input" name="sides" value=20 type="number" min="2" max="100" />
+        <br />
+        <input class="form__button" type="submit" value="Let's roll" />
+    </fieldset>
+</form>
+
+<div class="history" id="history" hx-get="/history" hx-trigger="load" hx-swap="innerHTML"></div>
+
+<div 
+    hx-ext="sse"
+    sse-connect="/sse"
+    hx-target="#history"
+    hx-swap="innerHTML"
+    sse-swap="message"
+    sse-error-reconnect-after="2000"></div>
+<!-- <div class="history" id="history"></div> -->
+{{- end }}

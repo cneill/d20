@@ -1,0 +1,15 @@
+{{- define "layout" -}}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>d20 | {{ block "title" . }}Home{{ end }}</title>
+    <link rel="stylesheet" href="/static/css/index.css" type="text/css"></link>
+</head>
+<body class="body">
+    {{ block "content" . }}{{ end }}
+    <script src="/static/js/htmx.min.js"></script>
+    <script src="/static/js/sse.js"></script>
+    <script src="/static/js/index.js"></script>
+</body>
+</html>
+{{- end -}}

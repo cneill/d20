@@ -1,0 +1,37 @@
+{{ define "history" }}
+{{- if .OOB }}
+<div class="history" id="history" hx-oob="true">
+{{- else }}
+<div class="history" id="history">
+{{- end }}
+    <table class="table">
+        <thead>
+            <tr class="table__row">
+                <th class="table__cell table__header">Name</th>
+                <th class="table__cell table__header">Time</th>
+                <th class="table__cell table__header">Roll</th>
+                <th class="table__cell table__header">IP</th>
+            </tr>
+        </thead>
+        <tbody>
+        {{ range .History }}
+            <tr class="table__row">
+                <td class="table__cell"><b>{{ .User.Name }}</b> ({{ .User.CharacterName }})</td>
+                <td class="table__cell">{{ .Time.Format "Jan 02, 15:04:05" }}</td>
+                <td class="table__cell">{{ .Result.String }}</td>
+                <td class="table__cell">{{ .User.IPAddress }}</td>
+            </tr>
+        {{ end }}
+        </tbody>
+    </table>
+</div>
+{{- end -}}
+
+{{ define "history-row" }}
+<tr class="table__row">
+    <td class="table__cell"><b>{{ .User.Name }}</b> ({{ .User.CharacterName }})</td>
+    <td class="table__cell">{{ .Time.Format "Jan 02, 15:04:05" }}</td>
+    <td class="table__cell">{{ .Result.String }}</td>
+    <td class="table__cell">{{ .User.IPAddress }}</td>
+</tr>
+{{- end -}}
