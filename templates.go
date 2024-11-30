@@ -16,6 +16,8 @@ var funcMap = template.FuncMap{
 	"withQuery":         withQuery,
 	"withoutQuery":      withoutQuery,
 	"formatDiceResults": formatDiceResults,
+	"formatList":        formatList,
+	"formatMap":         formatMap,
 }
 
 type TemplateRenderer struct {
@@ -138,9 +140,46 @@ func formatDiceResults(results DiceResults) template.HTML {
 	htmlParts := make([]string, len(results))
 
 	for i, result := range results {
-		htmlResult := fmt.Sprintf(`<span class="dice__result">%d</span>`, result)
+		classes := []string{}
+
+		switch {
+		case result.Complication:
+			classes = append(classes, "dice__result--complication")
+		case result.Crit:
+			classes = append(classes, "dice__result--crit")
+		default:
+			classes = append(classes, "dice__result--normal")
+		}
+
+		htmlResult := fmt.Sprintf(`<span class="dice__result %s">%d</span>`, strings.Join(classes, " "), result.Value)
 		htmlParts[i] = htmlResult
 	}
 
 	return template.HTML(strings.Join(htmlParts, " ")) //nolint:gosec
+}
+
+func formatList(items []string) template.HTML {
+	htmlParts := []string{`<ul class="list">`}
+
+	for _, item := range items {
+		htmlParts = append(htmlParts, `<li class="list__item">`+template.HTMLEscapeString(item)+`</li>`)
+	}
+
+	htmlParts = append(htmlParts, `</ul>`)
+
+	return template.HTML(strings.Join(htmlParts, "\n")) //nolint:gosec
+}
+
+func formatMap(items map[string][]string) template.HTML {
+	htmlParts := []string{`<ul class="list">`}
+
+	for key, values := range items {
+		keyString := template.HTMLEscapeString(key)
+		valuesString := template.HTMLEscapeString(strings.Join(values, ", "))
+		htmlParts = append(htmlParts, `<li class="list__item"><b>`+keyString+`:</b> `+valuesString+`</li>`)
+	}
+
+	htmlParts = append(htmlParts, `</ul>`)
+
+	return template.HTML(strings.Join(htmlParts, "\n")) //nolint:gosec
 }

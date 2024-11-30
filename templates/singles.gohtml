@@ -1,12 +1,24 @@
 {{ define "stats" }}
-<div class="stats" id="stats">
-    <div class="stats__item">
-        <span class="stats__label">Momentum</span>
-        <span class="stats__value">{{ .Momentum }}</span>
+<div class="stats-container" id="stats">
+    <div class="stats__segment" id="basic-stats">
+        <div class="stats__segment__item">
+            <span class="stats__segment__label">Momentum</span>
+            <span class="stats__segment__value">{{ .Momentum }}</span>
+        </div>
+        <div class="stats__segment__item">
+            <span class="stats__segment__label">Threat</span>
+            <span class="stats__segment__value">{{ .Threat }}</span>
+        </div>
     </div>
-    <div class="stats__item">
-        <span class="stats__label">Threat</span>
-        <span class="stats__value">{{ .Threat }}</span>
+    <div class="stats__segment" id="scene-stats">
+        <div class="stats__segment__item">
+            <span class="stats__segment__label">Scene Traits</span>
+            <span class="stats__segment__value">{{ .SceneTraits | formatList }}</span>
+        </div>
+        <!-- <div class="stats__segment__item"> -->
+        <!--     <span class="stats__segment__label">Character Traits</span> -->
+        <!--     <span class="stats__segment__value">{{ .CharacterTraits | formatMap }}</span> -->
+        <!-- </div> -->
     </div>
 </div>
 {{- end -}}

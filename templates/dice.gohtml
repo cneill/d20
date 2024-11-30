@@ -4,44 +4,62 @@
 
 {{- define "content" -}}
 {{- $user := .User }}
-<h1>Hi, {{ $user.Name }}!</h1>
 
 {{- if not $user.IsGameMaster }}
 <form class="form" hx-post="/roll" hx-target="#history">
+    <p class="text">Rolling as {{ $user.CharacterName }}</p>
     <fieldset class="form__fieldset">
-        <label class="form__label" for="num">Number of dice:</label>
+        <label class="form__label" for="num">Number of dice</label>
         <input class="form__input" name="num" value=2 type="number" min="1" max="10" />
         <br />
-        <label class="form__label" for="sides">Number of sides:</label>
-        <input class="form__input" name="sides" value=20 type="number" min="2" max="100" />
+        <label class="form__label" for="sides">Number of sides</label>
+        <input class="form__input" name="sides" value=20 type="number" min="20" max="20" />
+        <br />
+        <label class="form__label" for="crit-on">Crit on</label>
+        <input class="form__input" name="crit-on" value=1 type="number" min="1" max="20" />
+        <br />
+        <label class="form__label" for="complication-on">Complication on</label>
+        <input class="form__input" name="complication-on" value=20 type="number" min="1" max="20" />
         <br />
         <input class="form__button" type="submit" value="Let's roll" />
     </fieldset>
 </form>
 {{- else }}
 <div class="gamemaster" id="gamemaster">
-    <h1>Game Master Settings</h1>
+    <h1 class="heading">Game Master Settings</h1>
     <form class="form" hx-post="/game-master" hx-target="#stats">
-        <h2>Update stats</h2>
+        <h2 class="heading">Update stats</h2>
         <fieldset class="form__fieldset">
-            <label class="form__label" for="threat">Threat</label>
-            <input class="form__input" name="threat" value="{{ .Stats.Threat }}" type="number" min="0" max="500" />
-            <br />
             <label class="form__label" for="momentum">Momentum</label>
             <input class="form__input" name="momentum" value="{{ .Stats.Momentum }}" type="number" min="0" max="500" />
             <br />
+            <label class="form__label" for="threat">Threat</label>
+            <input class="form__input" name="threat" value="{{ .Stats.Threat }}" type="number" min="0" max="500" />
+            <br />
+            <label class="form__label" for="scene-traits">Scene traits</label>
+            <input class="form__input" name="scene-traits" value="{{ .Stats.SceneTraits.AsString }}" type="text" />
+            <br />
+            <!-- <label class="form__label" for="character-traits">Character traits</label> -->
+            <!-- <input class="form__input" name="character-traits" value="{{ .Stats.CharacterTraits }}" type="text" /> -->
+            <!-- <br /> -->
             <input class="form__button" type="submit" value="Update" />
         </fieldset>
     </form>
 
     <form class="form" hx-post="/private-roll" hx-target="#private-roll">
-        <h2>Private roll</h2>
+        <h2 class="heading">Private roll</h2>
         <fieldset class="form__fieldset">
-            <label class="form__label" for="num">Number of dice:</label>
+            <label class="form__label" for="num">Number of dice</label>
             <input class="form__input" name="num" value=2 type="number" min="1" max="10" />
             <br />
-            <label class="form__label" for="sides">Number of sides:</label>
-            <input class="form__input" name="sides" value=20 type="number" min="2" max="100" />
+            <label class="form__label" for="sides">Number of sides</label>
+            <input class="form__input" name="sides" value=20 type="number" min="20" max="20" />
+            <br />
+            <label class="form__label" for="crit-on">Crit on</label>
+            <input class="form__input" name="crit-on" value=1 type="number" min="1" max="20" />
+            <br />
+            <label class="form__label" for="complication-on">Complication on</label>
+            <input class="form__input" name="complication-on" value=20 type="number" min="1" max="20" />
             <br />
             <input class="form__button" type="submit" value="Private roll" />
         </fieldset>
@@ -51,10 +69,10 @@
 </div>
 {{- end }}
 
-<h1>Stats</h1>
+<h1 class="heading">Stats</h1>
 <div class="stats" id="stats" hx-get="/stats" hx-trigger="load" hx-swap="outerHTML"></div>
 
-<h1>Rolls</h1>
+<h1 class="heading">Rolls</h1>
 <div class="history" id="history" hx-get="/history" hx-trigger="load" hx-swap="outerHTML"></div>
 
 <div 
@@ -71,6 +89,5 @@
         hx-swap="innerHTML"
         sse-swap="STATS"
         sse-error-reconnect-after="2000"></div>
-
 </div>
 {{- end }}

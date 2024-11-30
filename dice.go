@@ -1,43 +1,57 @@
 package main
 
 import (
-	"crypto/rand"
 	"fmt"
-	"math/big"
-	"slices"
+	"math/rand/v2"
 	"sort"
 	"strings"
 	"time"
 )
 
 type Die struct {
-	Sides int
+	Sides          int
+	CritOn         int // at or below
+	ComplicationOn int // at or above
 }
 
-func (d Die) Roll() int {
-	// Don't want this to return 0 so we cap at sides-1 and add 1
-	val, err := rand.Int(rand.Reader, big.NewInt(int64(d.Sides)))
-	if err != nil {
-		panic(fmt.Errorf("failed to roll die: %w", err))
+func (d Die) Roll() DieResult {
+	value := 1 + rand.IntN(d.Sides)
+	crit := false
+	complication := false
+
+	if value <= d.CritOn {
+		crit = true
 	}
 
-	return int(val.Int64()) + 1
+	if value >= d.ComplicationOn {
+		complication = true
+	}
+
+	return DieResult{
+		Value:        value,
+		Crit:         crit,
+		Complication: complication,
+	}
 }
 
 type Dice []Die
 
-func NewDice(sides, num int) Dice {
+func NewDice(sides, num, critOn, complicationOn int) Dice {
 	result := make(Dice, num)
 
 	for i := range num {
-		result[i] = Die{sides}
+		result[i] = Die{
+			Sides:          sides,
+			CritOn:         critOn,
+			ComplicationOn: complicationOn,
+		}
 	}
 
 	return result
 }
 
 func (d Dice) Roll(user *User) Roll {
-	result := make([]int, len(d))
+	result := make([]DieResult, len(d))
 
 	for i, die := range d {
 		result[i] = die.Roll()
@@ -61,7 +75,17 @@ type Roll struct {
 type Rolls []Roll
 
 func (r Rolls) Sort() Rolls {
-	newRolls := slices.Clone(r)
+	newRolls := make(Rolls, len(r))
+
+	for rollNum := range r {
+		newRoll := Roll{
+			Result: r[rollNum].Result,
+			Time:   r[rollNum].Time,
+			User:   r[rollNum].User,
+		}
+		newRolls[rollNum] = newRoll
+	}
+
 	sort.Slice(newRolls, func(i, j int) bool {
 		return newRolls[i].Time.After(newRolls[j].Time)
 	})
@@ -69,13 +93,19 @@ func (r Rolls) Sort() Rolls {
 	return newRolls
 }
 
-type DiceResults []int
+type DieResult struct {
+	Value        int
+	Crit         bool
+	Complication bool
+}
 
-func (r DiceResults) String() string {
+type DiceResults []DieResult
+
+func (d DiceResults) String() string {
 	result := ""
 
-	for _, dieResult := range r {
-		result += fmt.Sprintf("%d | ", dieResult)
+	for _, dieResult := range d {
+		result += fmt.Sprintf("%d | ", dieResult.Value)
 	}
 
 	result = strings.TrimSuffix(result, " | ")

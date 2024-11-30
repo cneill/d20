@@ -119,7 +119,19 @@ func (s *Server) RollHandler(writer http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	dice := NewDice(int(sides), int(num))
+	critOn, err := strconv.ParseInt(req.Form.Get("crit-on"), 10, 64)
+	if err != nil {
+		s.doErr(writer, fmt.Sprintf("invalid 'crit on' number: %v", err))
+		return
+	}
+
+	complicationOn, err := strconv.ParseInt(req.Form.Get("complication-on"), 10, 64)
+	if err != nil {
+		s.doErr(writer, fmt.Sprintf("invalid 'complication on' number: %v", err))
+		return
+	}
+
+	dice := NewDice(int(sides), int(num), int(critOn), int(complicationOn))
 	roll := dice.Roll(user)
 
 	s.rollMutex.Lock()
@@ -184,11 +196,22 @@ func (s *Server) GameMasterHandler(writer http.ResponseWriter, req *http.Request
 		return
 	}
 
-	s.statsMutex.Lock()
-	s.Stats.Threat = int(threat)
-	s.Stats.Momentum = int(momentum)
-	s.statsMutex.Unlock()
+	sceneTraitsRaw := req.Form.Get("scene-traits")
+	sceneTraitParts := strings.Split(sceneTraitsRaw, ",")
+	sceneTraits := make([]string, 0, len(sceneTraitParts))
 
+	for _, sceneTrait := range sceneTraitParts {
+		cleaned := strings.TrimSpace(sceneTrait)
+		if cleaned != "" {
+			sceneTraits = append(sceneTraits, cleaned)
+		}
+	}
+
+	// characterTraitsRaw := req.Form.Get("character-traits")
+
+	s.Stats.SetThreat(int(threat))
+	s.Stats.SetMomentum(int(momentum))
+	s.Stats.SetSceneTraits(sceneTraits)
 	s.NotifyClients(EventTypeStats)
 }
 
@@ -212,7 +235,19 @@ func (s *Server) PrivateRollHandler(writer http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	dice := NewDice(int(sides), int(num))
+	critOn, err := strconv.ParseInt(req.Form.Get("crit-on"), 10, 64)
+	if err != nil {
+		s.doErr(writer, fmt.Sprintf("invalid 'crit on' number: %v", err))
+		return
+	}
+
+	complicationOn, err := strconv.ParseInt(req.Form.Get("complication-on"), 10, 64)
+	if err != nil {
+		s.doErr(writer, fmt.Sprintf("invalid 'complication on' number: %v", err))
+		return
+	}
+
+	dice := NewDice(int(sides), int(num), int(critOn), int(complicationOn))
 	roll := dice.Roll(user)
 
 	if err := s.Renderer.ExecuteSingle(writer, "private_roll", roll); err != nil {
