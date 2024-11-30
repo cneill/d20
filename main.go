@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -8,9 +9,26 @@ import (
 )
 
 func runServer(ctx *cli.Context) error {
+	configFile := ctx.String("config")
+
+	configBytes, err := os.ReadFile(configFile)
+	if err != nil {
+		return fmt.Errorf("invalid config file %q: %w", configFile, err)
+	}
+
+	config := &Config{}
+	if err := json.Unmarshal(configBytes, config); err != nil {
+		return fmt.Errorf("failed to parse config file %q: %w", configFile, err)
+	}
+
+	if err := config.OK(); err != nil {
+		return fmt.Errorf("config error: %w", err)
+	}
+
 	serverOpts := &ServerOpts{
-		Host: ctx.String("host"),
-		Port: ctx.Int("port"),
+		Host:   ctx.String("host"),
+		Port:   ctx.Int("port"),
+		Config: config,
 	}
 
 	server, err := NewServer(serverOpts)
@@ -41,6 +59,11 @@ func setup() error {
 					&cli.IntFlag{
 						Name:  "port",
 						Value: 8080,
+					},
+					&cli.StringFlag{
+						Name:     "config",
+						Value:    "config.json",
+						Required: true,
 					},
 				},
 				Action: runServer,

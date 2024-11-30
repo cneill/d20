@@ -30,9 +30,15 @@ func (s *Server) IndexHandler(writer http.ResponseWriter, req *http.Request) {
 
 		name := req.Form.Get("name")
 		characterName := req.Form.Get("character-name")
+		partyKey := req.Form.Get("party-key")
 
 		if name == "" {
 			s.doErr(writer, "You must enter a name.")
+			return
+		}
+
+		if partyKey != s.Opts.Config.PartyKey {
+			s.doErr(writer, "Invalid party key")
 			return
 		}
 
@@ -47,7 +53,7 @@ func (s *Server) IndexHandler(writer http.ResponseWriter, req *http.Request) {
 		user := &User{
 			Name:          name,
 			CharacterName: characterName,
-			IsGameMaster:  characterName == "GM",
+			IsGameMaster:  characterName == s.Opts.Config.GameMasterName,
 			IPAddress:     ipAddr,
 		}
 

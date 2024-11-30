@@ -21,8 +21,9 @@ var staticContent embed.FS
 var templatesContent embed.FS
 
 type ServerOpts struct {
-	Host string
-	Port int
+	Host   string
+	Port   int
+	Config *Config
 }
 
 func (s *ServerOpts) OK() error {
